@@ -464,7 +464,11 @@ function entity_translation_menu_alter(&$items) {
           // Replace the main edit callback with our proxy implementation to set
           // form language to the current language and check access.
           $entity_position = array_search($scheme['path wildcard'], $edit_path_parts);
-          $original_item = $edit_item;
+          // Make sure incoming page and access arguments are arrays.
+          $original_item = $edit_item + array(
+            'page arguments' => array(),
+            'access arguments' => array(),
+          );
           $args = array($entity_type, $entity_position, FALSE, $original_item);
           $edit_item['page callback'] = 'entity_translation_edit_page';
           $edit_item['page arguments'] = array_merge($args, $original_item['page arguments']);

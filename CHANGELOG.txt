@@ -1,6 +1,9 @@
 
 Entity Translation 7.x-1.x, xxxx-xx-xx
 --------------------------------------
+#2536292 by plopesc, stefanos.petrakis: "Warning: array_merge(): Argument #2 is
+  not an array in entity_translation_menu_alter" When 'page arguments' or
+  'access arguments' are not defined in the original item
 #2921298 by Stevel, stefanos.petrakis: Missing test dependencies
 
 
