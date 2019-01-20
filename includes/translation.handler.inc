@@ -678,6 +678,12 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
       throw new Exception('Invalid translation language');
     }
 
+    // $args will be used later on in a call to notifyChildren(). We need
+    // to call func_get_args() before any modifications to the function's
+    // arguments take place. This is due to changes in PHP 7.0 and onwards.
+    // @see http://php.net/manual/en/function.func-get-args.php#refsect1-function.func-get-args-notes
+    $args = func_get_args();
+
     $translations = $this->getTranslations();
     $langcode = $translation['language'];
 
@@ -710,7 +716,6 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
       }
     }
 
-    $args = func_get_args();
     $this->notifyChildren(__FUNCTION__, $args);
   }
 
