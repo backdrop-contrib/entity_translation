@@ -1,6 +1,8 @@
 
 Entity Translation 7.x-1.x, xxxx-xx-xx
 --------------------------------------
+#3010146 by stefanos.petrakis: Expose extended ET-specific configuration for
+  pathauto
 #3050434 by shital.mahajan, jweowu, stefanos.petrakis: Since PHP 7.0, functions
   inspecting arguments, like func_get_args(), no longer report the original
   value as passed to a parameter
