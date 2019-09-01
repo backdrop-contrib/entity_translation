@@ -674,15 +674,10 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * @see EntityTranslationHandlerInterface::setTranslation()
    */
   public function setTranslation($translation, $values = NULL) {
+    $args = func_get_args();
     if (isset($translation['source']) && $translation['language'] == $translation['source']) {
       throw new Exception('Invalid translation language');
     }
-
-    // $args will be used later on in a call to notifyChildren(). We need
-    // to call func_get_args() before any modifications to the function's
-    // arguments take place. This is due to changes in PHP 7.0 and onwards.
-    // @see http://php.net/manual/en/function.func-get-args.php#refsect1-function.func-get-args-notes
-    $args = func_get_args();
 
     $translations = $this->getTranslations();
     $langcode = $translation['language'];
@@ -878,8 +873,8 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * {@inheritdoc}
    */
   public function setFormLanguage($langcode) {
-    $this->activeLanguage = $langcode;
     $args = func_get_args();
+    $this->activeLanguage = $langcode;
     $this->notifyChildren(__FUNCTION__, $args);
   }
 
@@ -947,6 +942,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * @see EntityTranslationHandlerInterface::setOriginalLanguage()
    */
   public function setOriginalLanguage($langcode) {
+    $args = func_get_args();
     $translations = $this->getTranslations();
 
     if (!isset($translations->original) || $translations->original != $langcode) {
@@ -957,7 +953,6 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
       }
 
       $translations->original = $langcode;
-      $args = func_get_args();
       $this->notifyChildren(__FUNCTION__, $args);
     }
   }
@@ -1049,6 +1044,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * @see EntityTranslationHandlerInterface::setOutdated()
    */
   public function setOutdated($outdated) {
+    $args = func_get_args();
     if ($outdated) {
       $translations = $this->getTranslations();
       foreach ($translations->data as $langcode => &$translation) {
@@ -1056,7 +1052,6 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
           $translation['translate'] = 1;
         }
       }
-      $args = func_get_args();
       $this->notifyChildren(__FUNCTION__, $args);
     }
   }
@@ -1212,8 +1207,8 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * @see EntityTranslationHandlerInterface::setSourceLanguage()
    */
   public function setSourceLanguage($langcode) {
-    $this->sourceLanguage = $langcode;
     $args = func_get_args();
+    $this->sourceLanguage = $langcode;
     $this->notifyChildren(__FUNCTION__, $args);
   }
 
@@ -1766,7 +1761,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
       if ($segment == $this->pathWildcard) {
         $path_segments[$index] = $this->getEntityId();
       }
-      elseif ($segment{0} == '%' && isset($this->routerMap[$index])) {
+      elseif ($segment[0] == '%' && isset($this->routerMap[$index])) {
         $path_segments[$index] = $this->routerMap[$index];
       }
     }

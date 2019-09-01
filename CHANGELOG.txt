@@ -1,6 +1,9 @@
 
 Entity Translation 7.x-1.x, xxxx-xx-xx
 --------------------------------------
+#3050434 by shital.mahajan, jweowu, stefanos.petrakis: Since PHP 7.0, functions
+  inspecting arguments, like func_get_args(), no longer report the original
+  value as passed to a parameter
 #3025770 by sudheeshps, patelmayank7552, stefanos.petrakis: PHP 7.0
   Compatibility
 #2536292 by plopesc, stefanos.petrakis: "Warning: array_merge(): Argument #2 is
