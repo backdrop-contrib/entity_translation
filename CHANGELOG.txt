@@ -1,6 +1,8 @@
 
 Entity Translation 7.x-1.x, xxxx-xx-xx
 --------------------------------------
+#2749525 by ChrisDarke, stefanos.petrakis: Notice: Trying to get property of non-object in
+  locale_language_url_rewrite_url() on Node Translation tab
 
 
 Entity Translation 7.x-1.1, 2019-11-24
