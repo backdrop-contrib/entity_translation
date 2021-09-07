@@ -1,6 +1,7 @@
-
 Entity Translation 7.x-1.x, xxxx-xx-xx
 --------------------------------------
+#3208034 by stefanos.petrakis, DamienMcKenna: PHP 7.4 and 8.0 compatibility for Entity
+  Translation
 #2749525 by ChrisDarke, stefanos.petrakis: Notice: Trying to get property of non-object in
   locale_language_url_rewrite_url() on Node Translation tab
 
