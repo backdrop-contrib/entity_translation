@@ -1,5 +1,10 @@
 Entity Translation 7.x-1.x, xxxx-xx-xx
 --------------------------------------
+
+
+
+Entity Translation 7.x-2.0-rc1, 2021-09-08
+------------------------------------------
 #3208034 by stefanos.petrakis, DamienMcKenna: PHP 7.4 and 8.0 compatibility for Entity
   Translation
 #2749525 by ChrisDarke, stefanos.petrakis: Notice: Trying to get property of non-object in
