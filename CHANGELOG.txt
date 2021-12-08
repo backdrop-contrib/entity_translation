@@ -1,6 +1,11 @@
-Entity Translation 7.x-1.x, xxxx-xx-xx
+
+Entity Translation 7.x-2.x, xxxx-xx-xx
 --------------------------------------
 
+
+Entity Translation 7.x-2.0, 2021-12-09
+--------------------------------------
+(no change)
 
 
 Entity Translation 7.x-2.0-rc1, 2021-09-08
