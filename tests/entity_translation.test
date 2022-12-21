@@ -748,7 +748,7 @@ class EntityTranslationContentTranslationTestCase extends EntityTranslationTestC
     // the source node.
     $target_language = 'es';
     $this->drupalGet('node/add/page', array('query' => array('translation' => $node->nid, 'target' => $target_language)));
-    $body_key = "body[${target_language}][0][value]";
+    $body_key = "body[{$target_language}][0][value]";
     $this->assertFieldByXPath("//textarea[@name='$body_key']", $node_body, "Body field correctly instantiated with the value of the source language.");
   }
 
