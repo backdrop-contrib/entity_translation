@@ -8,9 +8,15 @@
         "documentation": "https://www.drupal.org/docs/7/modules/entity-translation",
         "source": "https://git.drupalcode.org/project/entity_translation"
     },
+    "require": {
+        "php": ">=5.5"
+    },
     "require-dev": {
         "drupal/pathauto": "*",
         "drupal/title": "*",
         "drupal/i18n": "*"
+    },
+    "require": {
+      "php": ">=5.5"
     }
 }

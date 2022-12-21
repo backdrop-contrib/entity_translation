@@ -395,6 +395,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
   protected $entityId;
   protected $bundle;
   protected $revisionable;
+  protected $revisionId;
 
   /**
    * The translation handler factory.

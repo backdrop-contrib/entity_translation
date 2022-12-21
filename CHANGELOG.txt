@@ -1,6 +1,11 @@
 
-Entity Translation 7.x-2.x, xxxx-xx-xx
+Entity Translation 7.x-3.x, xxxx-xx-xx
 --------------------------------------
+
+
+Entity Translation 7.x-3.x, 2022-12-21
+--------------------------------------
+#3327347 by joseph.olstad, stefanos.petrakis: Fully Support PHP 8.2
 
 
 Entity Translation 7.x-2.0, 2021-12-09
