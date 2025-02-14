@@ -995,7 +995,8 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    */
   public static function isEntityTypeRevisionable($entity_type) {
     $entity_info = entity_get_info($entity_type);
-    return variable_get('entity_translation_revision_enabled', FALSE) && !empty($entity_info['entity keys']['revision']);
+    $revision_enabled = config_get('entity_translation.settings', 'revision_enabled');
+    return $revision_enabled && !empty($entity_info['entity keys']['revision']);
   }
 
   /**
@@ -1622,7 +1623,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
 
     $translation['status'] = intval($values['status']);
     $translation['uid'] = $values['name'] ? user_load_by_name($values['name'])->uid : 0;
-    $translation['created'] = empty($values['created']) ? REQUEST_TIME : strtotime($values['created']);
+    $translation['created'] = empty($values['created']) ? REQUEST_TIME : strtotime($values['created']['date'] . ' ' . $values['created']['time']);
     $this->setTranslation($translation);
 
     // If no redirect has been explicitly set, go to the edit form for the

@@ -11,25 +11,27 @@
 function entity_translation_admin_form($form, $form_state) {
   $options = array();
 
+  $config = config('entity_translation.settings');
+
   $form['locale_field_language_fallback'] = array(
     '#type' => 'checkbox',
     '#title' => t('Allow language fallback'),
     '#description' => t('When language fallback is allowed, an alternative translation will be displayed if the requested language is not available. Other modules, such as <a href="https://www.drupal.org/project/language_hierarchy" target="_blank">Language Hierarchy</a>, are needed to manage which languages are used as fallbacks. Otherwise, existing translations will be chosen based on their <a href="!url">language weight</a>.', array('!url' => url('admin/config/regional/language'))),
-    '#default_value' => variable_get('locale_field_language_fallback', TRUE),
+    '#default_value' => $config->get('locale_field_language_fallback'),
   );
 
-  $form['entity_translation_languages_enabled'] = array(
+  $form['languages_enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use only enabled languages'),
     '#description' => t('If checked, disabled languages will not show up as available languages. This setting does not apply to content types that are configured to use the Multilingual content (i18n_node) module as this module provides its own configuration.'),
-    '#default_value' => variable_get('entity_translation_languages_enabled', FALSE),
+    '#default_value' => $config->get('languages_enabled'),
   );
 
-  $form['entity_translation_show_fallback_on_overview_pages'] = array(
+  $form['show_fallback_on_overview_pages'] = array(
     '#type' => 'checkbox',
     '#title' => t('Show fallback statuses on overview pages'),
     '#description' => t('Enable to the show fallback information on the entity overview pages.'),
-    '#default_value' => variable_get('entity_translation_show_fallback_on_overview_pages', FALSE),
+    '#default_value' => $config->get('show_fallback_on_overview_pages'),
     '#states' => array(
       'visible' => array(
         ':input[name="locale_field_language_fallback"]' => array('checked' => TRUE),
@@ -37,14 +39,14 @@ function entity_translation_admin_form($form, $form_state) {
     ),
   );
 
-  $form['entity_translation_shared_labels'] = array(
+  $form['shared_labels'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display shared labels'),
     '#description' => t('Append an "all languages" hint to entity form widgets shared across translations.'),
-    '#default_value' => variable_get('entity_translation_shared_labels', TRUE),
+    '#default_value' => $config->get('shared_labels'),
   );
 
-  $form['entity_translation_workflow_enabled'] = array(
+  $form['workflow_enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable translation workflow permissions'),
     '#description' => t('By enabling the translation workflow permissions it will be possible to limit the access to the entity form elements. Once this is active every role previously allowed to access the entity form will need to be granted the <em>Edit original values</em> permission to edit the entity in the original language. Moreover, form elements dealing with values shared across the translations will be visible only to roles having been granted the <em>Edit shared values</em> permission.'),
@@ -74,7 +76,7 @@ function entity_translation_admin_form($form, $form_state) {
 
   // Avoid bloating memory with unused data.
   drupal_static_reset('_entity_translation_validate_path_schemes');
-  $enabled_types = array_filter(variable_get('entity_translation_entity_types', array()));
+  $enabled_types = $config->get('entity_types');
 
   $form['enabled'] = array(
     '#type' => 'fieldset',
@@ -84,7 +86,7 @@ function entity_translation_admin_form($form, $form_state) {
     '#collapsed' => !empty($enabled_types),
   );
 
-  $form['enabled']['entity_translation_entity_types'] = array(
+  $form['enabled']['entity_types'] = array(
     '#type' => 'checkboxes',
     '#options' => $options,
     '#default_value' => $enabled_types,
@@ -103,72 +105,73 @@ function entity_translation_admin_form($form, $form_state) {
   foreach (entity_translation_languages($entity_type) as $langcode => $language) {
     $languages[$langcode] = t($language->name);
   }
-
   foreach ($enabled_types as $entity_type) {
-    $label = $options[$entity_type];
+    if ($entity_type != 0) {
+      $label = $options[$entity_type];
 
-    $entity_info = entity_get_info($entity_type);
-    $bundles = !empty($entity_info['bundles']) ? $entity_info['bundles'] : array($entity_type => array('label' => $label));
-    $enabled_bundles = 0;
+      $entity_info = entity_get_info($entity_type);
+      $bundles = !empty($entity_info['bundles']) ? $entity_info['bundles'] : array($entity_type => array('label' => $label));
+      $enabled_bundles = 0;
 
-    foreach ($bundles as $bundle => $info) {
-      if (entity_translation_enabled_bundle($entity_type, $bundle)) {
-        $enabled_bundles++;
-        $settings = entity_translation_settings($entity_type, $bundle);
-        $settings_key = 'entity_translation_settings_' . $entity_type . '__' . $bundle;
-        $form['settings'][$entity_type][$settings_key] = array('#tree' => TRUE);
+      foreach ($bundles as $bundle => $info) {
+        if (entity_translation_enabled_bundle($entity_type, $bundle)) {
+          $enabled_bundles++;
+          $settings = entity_translation_settings($entity_type, $bundle);
+          $settings_key = $entity_type . '__' . $bundle;
+          $form['settings'][$entity_type][$settings_key] = array('#tree' => TRUE);
 
-        // If the entity defines no bundle we do not need the fieldset.
-        if (count($bundles) > 1 || $bundle != $entity_type) {
-          $form['settings'][$entity_type][$settings_key] += array(
-            '#type' => 'fieldset',
-            '#title' => $info['label'],
-            '#collapsible' => TRUE,
-            '#collapsed' => TRUE,
+          // If the entity defines no bundle we do not need the fieldset.
+          if (count($bundles) > 1 || $bundle != $entity_type) {
+            $form['settings'][$entity_type][$settings_key] += array(
+              '#type' => 'fieldset',
+              '#title' => $info['label'],
+              '#collapsible' => TRUE,
+              '#collapsed' => TRUE,
+            );
+          }
+
+          $form['settings'][$entity_type][$settings_key]['default_language'] = array(
+            '#type' => 'select',
+            '#title' => t('Default language'),
+            '#options' => $languages,
+            '#default_value' => $settings['default_language'],
+          );
+
+          $form['settings'][$entity_type][$settings_key]['hide_language_selector'] = array(
+            '#type' => 'checkbox',
+            '#title' => t('Hide language selector'),
+            '#default_value' => $settings['hide_language_selector'],
+          );
+
+          $form['settings'][$entity_type][$settings_key]['exclude_language_none'] = array(
+            '#type' => 'checkbox',
+            '#title' => t('Exclude <em>Language neutral</em> from the available languages'),
+            '#default_value' => $settings['exclude_language_none'],
+          );
+
+          $form['settings'][$entity_type][$settings_key]['lock_language'] = array(
+            '#type' => 'checkbox',
+            '#title' => t('Prevent language from being changed once the entity has been created'),
+            '#default_value' => $settings['lock_language'],
+          );
+
+          $form['settings'][$entity_type][$settings_key]['shared_fields_original_only'] = array(
+            '#type' => 'checkbox',
+            '#title' => t('Hide shared elements on translation forms'),
+            '#description' => t('Display form elements shared across translations only on entity forms for the original language.'),
+            '#default_value' => $settings['shared_fields_original_only'],
           );
         }
+      }
 
-        $form['settings'][$entity_type][$settings_key]['default_language'] = array(
-          '#type' => 'select',
-          '#title' => t('Default language'),
-          '#options' => $languages,
-          '#default_value' => $settings['default_language'],
-        );
-
-        $form['settings'][$entity_type][$settings_key]['hide_language_selector'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Hide language selector'),
-          '#default_value' => $settings['hide_language_selector'],
-        );
-
-        $form['settings'][$entity_type][$settings_key]['exclude_language_none'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Exclude <em>Language neutral</em> from the available languages'),
-          '#default_value' => $settings['exclude_language_none'],
-        );
-
-        $form['settings'][$entity_type][$settings_key]['lock_language'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Prevent language from being changed once the entity has been created'),
-          '#default_value' => $settings['lock_language'],
-        );
-
-        $form['settings'][$entity_type][$settings_key]['shared_fields_original_only'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Hide shared elements on translation forms'),
-          '#description' => t('Display form elements shared across translations only on entity forms for the original language.'),
-          '#default_value' => $settings['shared_fields_original_only'],
+      if ($enabled_bundles > 0) {
+        $form['settings'][$entity_type][$settings_key]['#collapsed'] = $enabled_bundles > 1;
+        $form['settings'][$entity_type] += array(
+          '#type' => 'fieldset',
+          '#group' => 'tabs',
+          '#title' => $label,
         );
       }
-    }
-
-    if ($enabled_bundles > 0) {
-      $form['settings'][$entity_type][$settings_key]['#collapsed'] = $enabled_bundles > 1;
-      $form['settings'][$entity_type] += array(
-        '#type' => 'fieldset',
-        '#group' => 'tabs',
-        '#title' => $label,
-      );
     }
   }
 
@@ -224,6 +227,34 @@ function entity_translation_admin_form($form, $form_state) {
  * Submit handler for the entity translation settings form.
  */
 function entity_translation_admin_form_submit($form, $form_state) {
+  $values = $form_state['values'];
+  $config = config('entity_translation.settings');
+  $config->set('locale_field_language_fallback', $values['locale_field_language_fallback']);
+  $config->set('languages_enabled', $values['languages_enabled']);
+  $config->set('show_fallback_on_overview_pages', $values['show_fallback_on_overview_pages']);
+  $config->set('shared_labels', $values['shared_labels']);
+  $config->set('workflow_enabled', $values['workflow_enabled']);
+  $entity_types = [];
+  foreach ($values['entity_types'] as $key => $value) {
+    if ($value != 0) {
+      $entity_types[$key] = $key;
+    }
+  }
+  $config->set('entity_types', $entity_types);
+
+  $enabled_types = $config->get('entity_types');
+  foreach ($enabled_types as $entity_type) {
+    $entity_info = entity_get_info($entity_type);
+    $bundles = !empty($entity_info['bundles']) ? $entity_info['bundles'] : array($entity_type => array('label' => $entity_info['label']));
+    foreach ($bundles as $bundle => $info) {
+      if (entity_translation_enabled_bundle($entity_type, $bundle)) {
+        $settings_key = $entity_type . '__' . $bundle;
+        $config->set($settings_key, $values[$settings_key]);
+      }
+    }
+  }
+
+  $config->save();
   // Clear the entity info cache for the new entity translation settings.
   entity_info_cache_clear();
   menu_rebuild();
@@ -249,7 +280,7 @@ function entity_translation_settings_init($entity_type, $settings = array()) {
       }
     }
 
-    variable_set('entity_translation_settings_' . $entity_type . '__' . $bundle, $settings);
+    config_set('entity_translation.settings', $entity_type . '__' . $bundle, $settings);
   }
 }
 
@@ -296,8 +327,8 @@ function entity_translation_overview($entity_type, $entity, $callback = NULL) {
     if ($path) {
       $links = EntityTranslationDefaultHandler::languageSwitchLinks($path);
     }
-
-    $show_fallback = variable_get('locale_field_language_fallback', TRUE) && variable_get('entity_translation_show_fallback_on_overview_pages', FALSE);
+    $config = config_get('entity_translation.settings');
+    $show_fallback = $config->get('locale_field_language_fallback') && $config->get('show_fallback_on_overview_pages');
 
     foreach ($languages as $language) {
       $classes = array();

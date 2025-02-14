@@ -1,0 +1,12 @@
+{
+  "_config_name": "entity_translation.settings",
+  "entity_types": ["node"],
+  "translation_language_type": "und",
+  "revision_enabled": true,
+  "taxonomy_autocomplete": true,
+  "locale_field_language_fallback": true,
+  "languages_enabled": false,
+  "show_fallback_on_overview_pages": false,
+  "shared_labels": true,
+  "workflow_enabled": false
+}

@@ -5,9 +5,8 @@
  * Allows entities to be translated into different languages.
  */
 
-module_load_include('inc', 'entity_translation', 'entity_translation.node');
-module_load_include('inc', 'entity_translation', 'entity_translation.taxonomy');
-
+require_once(__DIR__ . '/entity_translation.node.inc');
+require_once(__DIR__ . '/entity_translation.taxonomy.inc');
 
 /**
  * Language code identifying the site default language.
@@ -29,6 +28,39 @@ define('ENTITY_TRANSLATION_LANGUAGE_AUTHOR', 'xx-et-author');
  */
 define('I18N_MODE_ENTITY_TRANSLATION', 32768);
 
+/**
+ * Implements hook_autoload_info().
+ */
+function entity_translation_autoload_info() {
+  return [
+    'EntityTranslationDefaultHandler' => 'includes/translation.handler.inc',
+    'MigrateTranslationEntityHandler' => 'includes/translation.migrate.inc',
+    'EntityTranslationNodeHandler' => 'includes/translation.handler.node.inc',
+    'EntityTranslationUserHandler' => 'includes/translation.handler.user.inc',
+    'EntityTranslationCommentHandler' => 'includes/translation.handler.comment.inc',
+    'EntityTranslationHandlerFactory' => 'includes/translation.handler_factory.inc',
+    'EntityTranslationTaxonomyTermHandler' => 'includes/translation.handler.taxonomy_term.inc',
+    // views
+    'entity_translation_handler_field_label' => 'views/entity_translation_handler_field_label.inc',
+    'entity_translation_handler_field_translate_link' => 'views/entity_translation_handler_field_translate_link.inc',
+    'entity_translation_handler_relationship' => 'views/entity_translation_handler_relationship.inc',
+    'entity_translation_handler_filter_language' => 'views/entity_translation_handler_filter_language.inc',
+    'entity_translation_handler_filter_entity_type' => 'views/entity_translation_handler_filter_entity_type.inc',
+    'entity_translation_handler_field_field' => 'views/entity_translation_handler_field_field.inc',
+    'entity_translation_handler_filter_translation_exists' => 'views/entity_translation_handler_filter_translation_exists.inc',
+    // test stuff
+    'EntityTranslationTestCase' => 'tests/entity_translation.test',
+    'EntityTranslationTranslationTestCase' => 'tests/entity_translation.test',
+    'EntityTranslationCommentTestCase' => 'tests/entity_translation.test',
+    'EntityTranslationCommentTestCase' => 'tests/entity_translation.test',
+    'EntityTranslationHookTestCase' => 'tests/entity_translation.test',
+    'EntityTranslationHierarchyTestCase' => 'tests/entity_translation.test',
+    'EntityTranslationContentTranslationTestCase' => 'tests/entity_translation.test',
+    'EntityTranslationIntegrationTestCase' => 'tests/entity_translation.test',
+    'EntityTranslationToggleFieldsTranslatabilityTestCase' => 'tests/entity_translation.test',
+    'EntityTranslationTaxonomyAutocompleteTestCase' => 'tests/entity_translation.test',
+  ];
+}
 
 /**
  * Implements hook_hook_info().
@@ -846,7 +878,7 @@ function entity_translation_permission() {
  * Returns TRUE if the translation workflow is enabled.
  */
 function entity_translation_workflow_enabled() {
-  return variable_get('entity_translation_workflow_enabled', FALSE);
+  return config_get('entity_translation.settings', 'workflow_enabled');
 }
 
 /**
@@ -1782,9 +1814,8 @@ function _entity_translation_field_desc($field) {
  *   registered as a field translation handler. Defaults to FALSE.
  */
 function entity_translation_enabled($entity_type, $entity = NULL, $skip_handler = FALSE) {
-  $enabled_types = variable_get('entity_translation_entity_types', array());
-  $enabled = !empty($enabled_types[$entity_type]) && ($skip_handler || field_has_translation_handler($entity_type, 'entity_translation'));
-
+  $enabled_types = config_get('entity_translation.settings', 'entity_types');
+  $enabled = is_array($enabled_types) && in_array($entity_type, $enabled_types) && ($skip_handler || field_has_translation_handler($entity_type, 'entity_translation'));
   // If the entity type is not enabled or we are not checking bundle status, we
   // have a result.
   if (!$enabled || !isset($entity)) {
@@ -1823,7 +1854,10 @@ function entity_translation_enabled_bundle($entity_type, $bundle) {
  * Return the entity translation settings for the given entity type and bundle.
  */
 function entity_translation_settings($entity_type, $bundle) {
-  $settings = variable_get('entity_translation_settings_' . $entity_type . '__' . $bundle, array());
+  $settings = config_get('entity_translation.settings', $entity_type . '__' . $bundle);
+  if ($settings == NULL) {
+    $settings = [];
+  }
 
   if (empty($settings)) {
     $info = entity_get_info($entity_type);
@@ -1989,10 +2023,7 @@ function entity_translation_access($entity_type, $translation) {
  * Returns the set of languages available for translations.
  */
 function entity_translation_languages($entity_type = NULL, $entity = NULL) {
-  if (isset($entity) && $entity_type == 'node' && module_exists('i18n_node')) {
-    // @todo Inherit i18n language settings.
-  }
-  elseif (variable_get('entity_translation_languages_enabled', FALSE)) {
+  if (config_get('entity_translation.settings', 'languages_enabled')) {
     $languages = language_list('enabled');
     return $languages[1];
   }

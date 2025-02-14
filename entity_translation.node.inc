@@ -80,7 +80,7 @@ function entity_translation_node_tab_access() {
  *   Boolean value.
  */
 function entity_translation_node_supported_type($type) {
-  return variable_get('language_content_type_' . $type, 0) == ENTITY_TRANSLATION_ENABLED;
+  return config_get('entity_translation.settings', 'node_bundle_enabled_' . $type);
 }
 
 /**
@@ -89,7 +89,8 @@ function entity_translation_node_supported_type($type) {
  * Provides content language switcher links to navigate among node translations.
  */
 function entity_translation_node_view($node, $build_mode, $langcode) {
-  if (!empty($node->translations) && drupal_multilingual() && entity_translation_node_supported_type($node->type) && !variable_get("entity_translation_hide_translation_links_{$node->type}", FALSE)) {
+  $links_turned_on_for_type = config_get('entity_translation.settings', "entity_translation_hide_translation_links_{$node->type}");
+  if (!empty($node->translations) && drupal_multilingual() && entity_translation_node_supported_type($node->type) && $links_turned_on_for_type) {
     $path = 'node/' . $node->nid;
     $links = EntityTranslationDefaultHandler::languageSwitchLinks($path);
 
@@ -124,22 +125,29 @@ function entity_translation_node_view($node, $build_mode, $langcode) {
  */
 function entity_translation_form_node_type_form_alter(&$form, &$form_state) {
   if (entity_translation_enabled('node')) {
+    $form['#submit'][] = 'entity_translation_form_node_type_submit';
     $type = $form['#node_type']->type;
-
-    $t_args = array('!url' => url('admin/config/regional/entity_translation'));
-    $form['workflow']['language_content_type']['#options'][ENTITY_TRANSLATION_ENABLED] = t('Enabled, with field translation');
-    $form['workflow']['language_content_type']['#description'] .= ' <p>' . t('If field translation is selected you can have per-field translation for each available language. You can find more options in the <a href="!url">entity translation settings</a>.', $t_args) . '</p>';
+    $description = t('If field translation is selected you can have per-field translation for each available language. You can find more options in the <a href="!url">entity translation settings</a>.', [
+    '!url' => url('admin/config/regional/entity_translation'),
+    ]);
+    $config = config('entity_translation.settings');
+    $form['multilingual']['entity_translation_enabled'] = [
+      '#title' => t('Entity Translation'),
+      '#description' => $description,
+      '#type' => 'checkbox',
+      '#default_value' => $config->get('node_bundle_enabled_' . $type),
+    ];
 
     // Hide settings when entity translation is disabled for this content type.
     $states = array(
       'visible' => array(
-        ':input[name="language_content_type"]' => array('value' => ENTITY_TRANSLATION_ENABLED),
+        ':input[name="entity_translation_enabled"]' => array('checked' => TRUE),
       ),
     );
 
-    $form['workflow']['entity_translation_hide_translation_links'] = array(
+    $form['multilingual']['hide_translation_links'] = array(
       '#type' => 'checkbox',
-      '#default_value' => variable_get("entity_translation_hide_translation_links_$type", FALSE),
+      '#default_value' => $config->get("hide_translation_links_$type"),
       '#title' => t('Hide content translation links'),
       '#description' => t('Hide the links to translations in content body and teasers. If you choose this option, switching language will only be available from the language switcher block.'),
       '#states' => $states,
@@ -149,7 +157,7 @@ function entity_translation_form_node_type_form_alter(&$form, &$form_state) {
       '#type' => 'radios',
       '#title' => t('Translation post information'),
       '#description' => t('Whether the translation authoring information should be hidden, shown, or replace the node\'s authoring information.'),
-      '#default_value' => variable_get("entity_translation_node_metadata_$type", ENTITY_TRANSLATION_METADATA_HIDE),
+      '#default_value' => $config->get("node_metadata_$type"),
       '#options' => array(t('Hidden'), t('Shown'), t('Replacing post information')),
       '#states' => $states,
     );
@@ -158,11 +166,24 @@ function entity_translation_form_node_type_form_alter(&$form, &$form_state) {
       $form['comment']['entity_translation_comment_filter'] = array(
         '#type' => 'checkbox',
         '#title' => t('Filter comments per language'),
-        '#default_value' => variable_get("entity_translation_comment_filter_$type", FALSE),
+        '#default_value' => $config->get("comment_filter_$type"),
         '#description' => t('Show only comments whose language matches content language.'),
         '#states' => $states,
       );
     }
+  }
+}
+
+function entity_translation_form_node_type_submit(&$form, &$form_state) {
+  if (entity_translation_enabled('node')) {
+    $type = $form['#node_type']->type;
+    $config = config('entity_translation.settings');
+    $values = $form_state['values'];
+    $config->set("node_bundle_enabled_$type", $values['entity_translation_enabled']);
+    $config->set("hide_translation_links_$type", $values['hide_translation_links']);
+    $config->set("comment_filter_$type", $values['entity_translation_comment_filter']);
+    $config->set("node_metadata_$type", $values['entity_translation_node_metadata']);
+    $config->save();
   }
 }
 
@@ -173,8 +194,13 @@ function entity_translation_form_node_type_form_alter(&$form, &$form_state) {
  */
 function entity_translation_preprocess_node(&$variables) {
   $node = $variables['node'];
-  $submitted = variable_get("node_submitted_{$node->type}", TRUE);
-  $mode = variable_get("entity_translation_node_metadata_{$node->type}", ENTITY_TRANSLATION_METADATA_HIDE);
+  $node_type = node_type_get_type($node->type);
+  $submitted = $node_type->settings['node_submitted'];
+  $mode = ENTITY_TRANSLATION_METADATA_HIDE;
+  $config = config('entity_translation.settings');
+  if ($config->get("entity_translation_node_metadata_{$node->type}") !== NULL) {
+    $mode = $config->get("entity_translation_node_metadata_{$node->type}");
+  }
 
   if ($submitted && $mode != ENTITY_TRANSLATION_METADATA_HIDE) {
     global $language_content, $user;

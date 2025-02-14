@@ -309,13 +309,13 @@ class EntityTranslationTranslationTestCase extends EntityTranslationTestCase {
    * Test disabled languages.
    *
    * Make sure disabled languages are not accessible in the language list when
-   * the option entity_translation_languages_enabled is enabled.
+   * the option languages_enabled is enabled.
    */
   function testDisabledLanguages() {
     $this->drupalGet('node/add/page');
     $this->assertRaw('value="fr"', 'French is available even if the language is disabled');
 
-    variable_set('entity_translation_languages_enabled', TRUE);
+    config_set('entity_translation.settings', 'languages_enabled', TRUE);
     $this->drupalGet('node/add/page');
     $this->assertNoRaw('value="fr"', 'French is not available when the language is disabled and the option entity_translation_languages_enabled is enabled.');
   }
