@@ -560,7 +560,7 @@ function entity_translation_taxonomy_term_field_attach_submit($entity_type, $ent
             continue;
           }
           foreach ($term_data as $term) {
-            entity_translation_entity_save('taxonomy_term', $term);
+            $term->save();
           }
         }
       }

@@ -80,7 +80,8 @@ function entity_translation_node_tab_access() {
  *   Boolean value.
  */
 function entity_translation_node_supported_type($type) {
-  return config_get('entity_translation.settings', 'node_bundle_enabled_' . $type);
+  $node_type = node_type_load($type);
+  return isset($node_type->settings['language']) && $node_type->settings['language'] == ENTITY_TRANSLATION_ENABLED;
 }
 
 /**
@@ -90,7 +91,7 @@ function entity_translation_node_supported_type($type) {
  */
 function entity_translation_node_view($node, $build_mode, $langcode) {
   $links_turned_on_for_type = config_get('entity_translation.settings', "entity_translation_hide_translation_links_{$node->type}");
-  if (!empty($node->translations) && drupal_multilingual() && entity_translation_node_supported_type($node->type) && $links_turned_on_for_type) {
+  if (!empty($node->translations) && language_multilingual() && entity_translation_node_supported_type($node->type) && $links_turned_on_for_type) {
     $path = 'node/' . $node->nid;
     $links = EntityTranslationDefaultHandler::languageSwitchLinks($path);
 
@@ -125,29 +126,37 @@ function entity_translation_node_view($node, $build_mode, $langcode) {
  */
 function entity_translation_form_node_type_form_alter(&$form, &$form_state) {
   if (entity_translation_enabled('node')) {
+    $type = $form['#node_type'];
     $form['#submit'][] = 'entity_translation_form_node_type_submit';
-    $type = $form['#node_type']->type;
     $description = t('If field translation is selected you can have per-field translation for each available language. You can find more options in the <a href="!url">entity translation settings</a>.', [
     '!url' => url('admin/config/regional/entity_translation'),
     ]);
     $config = config('entity_translation.settings');
-    $form['multilingual']['entity_translation_enabled'] = [
-      '#title' => t('Entity Translation'),
-      '#description' => $description,
-      '#type' => 'checkbox',
-      '#default_value' => $config->get('node_bundle_enabled_' . $type),
-    ];
 
+    if (!isset($type->settings['hide_translation_links'])) {
+      $type->settings['hide_translation_links'] = 0;
+      $type->settings['entity_translation_node_metadata'] = ENTITY_TRANSLATION_METADATA_HIDE;
+      $type->settings['entity_translation_comment_filter'] = FALSE;
+    }
+    $settings = $type->settings;
+
+    // Add translation option to content type form.
+    $form['multilingual']['language']['#type'] = 'radios';
+    $form['multilingual']['language']['#options'] = array(
+      0 => t('Disabled'),
+      1 => t('Enabled'),
+      ENTITY_TRANSLATION_ENABLED => t('Enabled, with Entity Translation (translate by field)'),
+    );
     // Hide settings when entity translation is disabled for this content type.
     $states = array(
       'visible' => array(
-        ':input[name="entity_translation_enabled"]' => array('checked' => TRUE),
+        ':input[name="language"]' => array('value' => ENTITY_TRANSLATION_ENABLED),
       ),
     );
 
     $form['multilingual']['hide_translation_links'] = array(
       '#type' => 'checkbox',
-      '#default_value' => $config->get("hide_translation_links_$type"),
+      '#default_value' => $settings['hide_translation_links'],
       '#title' => t('Hide content translation links'),
       '#description' => t('Hide the links to translations in content body and teasers. If you choose this option, switching language will only be available from the language switcher block.'),
       '#states' => $states,
@@ -157,7 +166,7 @@ function entity_translation_form_node_type_form_alter(&$form, &$form_state) {
       '#type' => 'radios',
       '#title' => t('Translation post information'),
       '#description' => t('Whether the translation authoring information should be hidden, shown, or replace the node\'s authoring information.'),
-      '#default_value' => $config->get("node_metadata_$type"),
+      '#default_value' => $settings['entity_translation_node_metadata'],
       '#options' => array(t('Hidden'), t('Shown'), t('Replacing post information')),
       '#states' => $states,
     );
@@ -166,7 +175,7 @@ function entity_translation_form_node_type_form_alter(&$form, &$form_state) {
       $form['comment']['entity_translation_comment_filter'] = array(
         '#type' => 'checkbox',
         '#title' => t('Filter comments per language'),
-        '#default_value' => $config->get("comment_filter_$type"),
+        '#default_value' => $settings['entity_translation_comment_filter'],
         '#description' => t('Show only comments whose language matches content language.'),
         '#states' => $states,
       );
@@ -175,6 +184,7 @@ function entity_translation_form_node_type_form_alter(&$form, &$form_state) {
 }
 
 function entity_translation_form_node_type_submit(&$form, &$form_state) {
+  /*
   if (entity_translation_enabled('node')) {
     $type = $form['#node_type']->type;
     $config = config('entity_translation.settings');
@@ -184,7 +194,7 @@ function entity_translation_form_node_type_submit(&$form, &$form_state) {
     $config->set("comment_filter_$type", $values['entity_translation_comment_filter']);
     $config->set("node_metadata_$type", $values['entity_translation_node_metadata']);
     $config->save();
-  }
+  }*/
 }
 
 /**

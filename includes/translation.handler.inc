@@ -492,11 +492,11 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
 
     foreach ($results as $row) {
       $id = $row->entity_id;
-      $entities[$id]->{$translations_key}->data[$row->language] = (array) $row;
+      $entities[$id]->{$translations_key}->data[$row->langcode] = (array) $row;
 
       // Only the original translation has an empty source.
       if (empty($row->source)) {
-        $entities[$id]->{$translations_key}->original = $row->language;
+        $entities[$id]->{$translations_key}->original = $row->langcode;
       }
     }
   }
@@ -612,6 +612,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * Saves entity translation records to the storage.
    */
   protected function doSaveTranslations($translations, $table, $revision = FALSE) {
+    $backtrace = debug_backtrace(22);
     // Delete and insert, rather than update, in case a value was added.
     $query = db_delete($table)
       ->condition('entity_type', $this->entityType)
@@ -626,7 +627,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
     $query->execute();
 
     if (count($translations->data)) {
-      $columns = array('entity_type', 'entity_id', 'revision_id', 'language', 'source', 'uid', 'status', 'translate', 'created', 'changed');
+      $columns = array('entity_type', 'entity_id', 'revision_id', 'langcode', 'source', 'uid', 'status', 'translate', 'created', 'changed');
       $query = db_insert($table)->fields($columns);
 
       // These values should override the translation ones as they are not
@@ -675,13 +676,14 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * @see EntityTranslationHandlerInterface::setTranslation()
    */
   public function setTranslation($translation, $values = NULL) {
+    dd('setTranslation');
     $args = func_get_args();
-    if (isset($translation['source']) && $translation['language'] == $translation['source']) {
+    if (isset($translation['source']) && $translation['langcode'] == $translation['source']) {
       throw new Exception('Invalid translation language');
     }
 
     $translations = $this->getTranslations();
-    $langcode = $translation['language'];
+    $langcode = $translation['langcode'];
 
     $this->setTranslating(TRUE);
 
@@ -763,9 +765,10 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    */
   public function initTranslations() {
     $langcode = $this->getLanguage();
+    $backtrace = debug_backtrace(2);
 
     if (!empty($langcode)) {
-      $translation = array('language' => $langcode, 'status' => 1);
+      $translation = array('langcode' => $langcode, 'status' => 1);
       $this->setTranslation($translation);
       $this->setOriginalLanguage($langcode);
     }
@@ -903,14 +906,14 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * @see EntityTranslationHandlerInterface::getLanguageKey()
    */
   public function getLanguageKey() {
-    return !empty($this->entityInfo['entity keys']['language']) ? $this->entityInfo['entity keys']['language'] : 'language';
+    return !empty($this->entityInfo['entity keys']['langcode']) ? $this->entityInfo['entity keys']['langcode'] : 'langcode';
   }
 
   /**
    * @see EntityTranslationHandlerInterface::getDefaultLanguage()
    */
   public function getDefaultLanguage() {
-    $settings = variable_get('entity_translation_settings_' . $this->entityType . '__' . $this->bundle, array());
+    $settings = config_get('entity_translation.settings', $this->entityType . '__' . $this->bundle);
 
     if (!empty($settings['default_language'])) {
       switch ($settings['default_language']) {
@@ -933,7 +936,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
     }
     else {
       // Fall back to the default language to keep backward compatibility.
-      $langcode = language_default()->language;
+      $langcode = language_default()->langcode;
     }
 
     return $langcode;
@@ -1587,6 +1590,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    */
   public function entityFormSubmit($form, &$form_state) {
     $form_langcode = $this->getActiveLanguage();
+
     $translations = $this->getTranslations();
     $is_translation = !empty($form_state['entity_translation']['is_translation']);
     $new_translation = !isset($translations->data[$form_langcode]);
@@ -1603,7 +1607,7 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
     if (!isset($translations->data[$form_langcode])) {
       // If we have a new translation the language is the original entity
       // language.
-      $translation = $is_translation ? array('language' => $form_langcode, 'source' => $this->getSourceLanguage()) : array('language' => $form_langcode, 'source' => '');
+      $translation = $is_translation ? array('langcode' => $form_langcode, 'source' => $this->getSourceLanguage()) : array('langcode' => $form_langcode, 'source' => '');
     }
     else {
       $translation = $translations->data[$form_langcode];

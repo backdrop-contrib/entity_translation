@@ -311,8 +311,7 @@ function entity_translation_overview($entity_type, $entity, $callback = NULL) {
   // Ensure that we have a coherent status between entity language and field
   // languages.
   if ($handler->initOriginalTranslation()) {
-    // FIXME!
-    entity_translation_entity_save($entity_type, $entity);
+    $entity->save();
   }
 
   $header = array(t('Language'), t('Source language'), t('Translation'), t('Status'), t('Operations'));
@@ -321,20 +320,20 @@ function entity_translation_overview($entity_type, $entity, $callback = NULL) {
   $path = $handler->getViewPath();
   $rows = array();
 
-  if (drupal_multilingual()) {
+  if (language_multilingual()) {
     // If we have a view path defined for the current entity get the switch
     // links based on it.
     if ($path) {
       $links = EntityTranslationDefaultHandler::languageSwitchLinks($path);
     }
-    $config = config_get('entity_translation.settings');
+    $config = config('entity_translation.settings');
     $show_fallback = $config->get('locale_field_language_fallback') && $config->get('show_fallback_on_overview_pages');
 
     foreach ($languages as $language) {
       $classes = array();
       $options = array();
       $language_name = $language->name;
-      $langcode = $language->language;
+      $langcode = $language->langcode;
       $edit_path = $handler->getEditPath($langcode);
       $add_path = "{$handler->getEditPath()}/add/$source/$langcode";
 
@@ -527,7 +526,7 @@ function entity_translation_delete_confirm_submit($form, &$form_state) {
 
   // Remove the translation entry and the related fields.
   $handler->removeTranslation($langcode);
-  entity_translation_entity_save($entity_type, $entity);
+  $entity->save();
 
   $form_state['redirect'] = $handler->getTranslatePath();
 }
@@ -596,7 +595,7 @@ function entity_translation_translatable_form_submit($form, $form_state) {
   $copy_all_languages = !empty($form_state['values']['copy_all_languages']);
   $field = field_info_field($field_name);
 
-  if ($field['translatable'] !== $translatable) {
+  if ($field['translatable'] != $translatable) {
     // Field translatability has changed since form creation, abort.
     $t_args = array('%field_name' => $field_name, '!translatable' => $translatable ? t('untranslatable') : t('translatable'));
     drupal_set_message(t('The field %field_name is already !translatable. No change was performed.', $t_args), 'warning');
@@ -783,7 +782,7 @@ function _entity_translation_update_field($entity_type, $entity, $field_name) {
   // otherwise any stored empty field value would be deleted. If this happens
   // the range queries would be messed up.
   if ($empty < count($entity->{$field_name})) {
-    entity_translation_entity_save($entity_type, $entity);
+    $entity->save();
   }
 }
 

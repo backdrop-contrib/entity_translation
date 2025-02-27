@@ -3,6 +3,9 @@ description = Allows entities to be translated into different languages.
 package = Multilingual - Entity Translation
 backdrop = 1.x
 configure = admin/config/regional/entity_translation
+
 dependencies[] = locale
+dependencies[] = language
+
 test_dependencies[] = pathauto:pathauto
 test_dependencies[] = title:title
