@@ -1632,11 +1632,50 @@ function entity_translation_entity_form_language_update($element, &$form_state, 
  * Submit handler for the entity deletion.
  */
 function entity_translation_entity_form_submit($form, &$form_state) {
+  if ($form_state['build_info']['form_id'] == 'page_node_form' && isset($form_state['node'])) {
+    entity_translation_entity_form_submit_node_update_field_langcode($form, $form_state);
+  }
   if ($form_state['clicked_button']['#value'] == t('Delete')) {
     $handler = entity_translation_entity_form_get_handler($form, $form_state);
     if (count($handler->getTranslations()->data) > 1) {
       $info = entity_get_info($form['#entity_type']);
       drupal_set_message(t('This will delete all the @entity_type translations.', array('@entity_type' => drupal_strtolower($info['label']))), 'warning');
+    }
+  }
+}
+/**
+ * Change langcode for fields back to translation langcode
+ *
+ * Drupal 7's version of entity submit functions such as
+ * locale_field_node_form_submit called entity_language which
+ * has been removed in Backdrop. entity_language allowed us to
+ * set a callback for an entities language setting and the module
+ * used the entity's language handler to get the language. Backdrop
+ * just uses the langcode from the form, which means that it resets
+ * the langcodes for the field back to the original language. This
+ * function switches the values back to the correct field language to
+ * match the handlers language.
+ */
+function entity_translation_entity_form_submit_node_update_field_langcode($form, &$form_state) {
+  $handler = entity_translation_entity_form_get_handler($form, $form_state);
+  if ($handler) {
+    $handler_langcode = $handler->getActiveLanguage();
+    $node_langcode = $form_state['values']['langcode'];
+    $node = $form_state['node'];
+    foreach (field_info_instances('node', $node->type) as $instance) {
+      $field_name = $instance['field_name'];
+      $field = field_info_field($field_name);
+      $field_langcode = $form[$field_name]['#language'];
+
+      // Handle a possible language change: new language values are inserted,
+      // previous ones are deleted.
+      if ($field['translatable']) {
+        $field_values = $form_state['values'][$field_name];
+        if (!empty($field_values[$node_langcode]) && empty($field_values[$field_langcode])) {
+          $form_state['values'][$field_name][$field_langcode] = $form_state['values'][$field_name][$node_langcode];
+          unset($form_state['values'][$field_name][$node_langcode]);
+        }
+      }
     }
   }
 }
