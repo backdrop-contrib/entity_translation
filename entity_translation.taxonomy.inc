@@ -12,8 +12,8 @@
  *   TRUE if translation is enabled, FALSE otherwise.
  */
 function entity_translation_taxonomy_term_enabled_vocabulary($vocabulary_name) {
-  $info = variable_get('entity_translation_taxonomy', array());
-  return !empty($info[$vocabulary_name]);
+  $vocabulary = taxonomy_vocabulary_load($vocabulary_name);
+  return isset($vocabulary->language) && $vocabulary->language == ENTITY_TRANSLATION_ENABLED;
 }
 
 /**
@@ -65,36 +65,13 @@ function entity_translation_taxonomy_term_tab_access() {
  */
 function entity_translation_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
   if (entity_translation_enabled('taxonomy_term')) {
-    $name = $form_state['vocabulary']->machine_name;
-    if (isset($form['i18n_translation']['i18n_mode'])) {
-      $args = array('!url' => url('admin/config/regional/entity_translation'));
-      $form['i18n_translation']['i18n_mode']['#options'][I18N_MODE_ENTITY_TRANSLATION] = t('Field translation. Term fields will be translated through the <a href="!url">Entity translation</a> module.', $args);
-      if (entity_translation_enabled_bundle('taxonomy_term', $name)) {
-        $form['i18n_translation']['i18n_mode']['#default_value'] = I18N_MODE_ENTITY_TRANSLATION;
-      }
-    }
-    else {
-      $form['entity_translation_taxonomy'] = array(
-        '#title' => t('Enable field translation'),
-        '#type' => 'checkbox',
-        '#prefix' => '<label>' . t('Translation') . '</label>',
-        '#default_value' => entity_translation_enabled('taxonomy_term', $name),
-      );
-    }
-    $form['#submit'][] = 'entity_translation_form_taxonomy_form_vocabulary_submit';
+    $form['multilingual']['language']['#type'] = 'radios';
+    $form['multilingual']['language']['#options'] = array(
+      0 => t('Disabled'),
+      1 => t('Enabled'),
+      ENTITY_TRANSLATION_ENABLED => t('Enabled, with Entity Translation (translate by field)'),
+    );
   }
-}
-
-/**
- * Submit handler for the taxonomy vocabulary form.
- */
-function entity_translation_form_taxonomy_form_vocabulary_submit($form, &$form_state) {
-  if (!empty($form_state['values']['i18n_mode']) && $form_state['values']['i18n_mode'] == I18N_MODE_ENTITY_TRANSLATION) {
-    $form_state['values']['entity_translation_taxonomy'] = TRUE;
-  }
-  $info = variable_get('entity_translation_taxonomy', array());
-  $info[$form_state['vocabulary']->machine_name] = !empty($form_state['values']['entity_translation_taxonomy']);
-  variable_set('entity_translation_taxonomy', $info);
 }
 
 /**
@@ -319,7 +296,7 @@ function entity_translation_taxonomy_term_autocomplete($langcode = NULL, $field_
   $term_matches = array();
   if ($tag_last != '') {
     if (!isset($langcode) || $langcode == LANGUAGE_NONE) {
-      $langcode = $GLOBALS['language_content']->language;
+      $langcode = $GLOBALS['language_content']->langcode;
     }
 
     // Part of the criteria for the query come from the field's own settings.
@@ -354,7 +331,7 @@ function entity_translation_taxonomy_term_autocomplete($langcode = NULL, $field_
     }
 
     // Select rows that match by term name.
-    $query->propertyCondition('vid', $vocabulary->vid);
+    $query->propertyCondition('vocabulary', $vocabulary->machine_name);
     $query->range(0, 10);
     $result = $query->execute();
 
@@ -387,12 +364,12 @@ function entity_translation_taxonomy_term_autocomplete($langcode = NULL, $field_
 function _entity_translation_taxonomy_reference_get_vocabulary($field) {
   $vocabulary = NULL;
   if (!empty($field['settings']['allowed_values'])) {
-    $vids = array();
     $vocabularies = taxonomy_vocabulary_get_names();
+    $machine_names = array();
     foreach ($field['settings']['allowed_values'] as $tree) {
-      $vids[] = $vocabularies[$tree['vocabulary']]->vid;
+      $machine_names[] = $vocabularies[$tree['vocabulary']]->machine_name;
     }
-    $vocabulary = taxonomy_vocabulary_load(reset($vids));
+    $vocabulary = taxonomy_vocabulary_load(reset($machine_names));
   }
   return $vocabulary;
 }
@@ -492,7 +469,7 @@ function entity_translation_taxonomy_autocomplete_validate($element, &$form_stat
     $query = new EntityFieldQuery();
     $query->addTag('taxonomy_term_access');
     $query->entityCondition('entity_type', $entity_type);
-    $query->propertyCondition('vid', $vocabulary->vid);
+    $query->propertyCondition('vocabulary', $vocabulary->machine_name);
     if ($langcode != LANGUAGE_NONE && module_invoke('title', 'field_replacement_enabled', $entity_type, $vocabulary->machine_name, 'name')) {
       $language_group = 0;
       // Do not select already entered terms.
@@ -514,7 +491,7 @@ function entity_translation_taxonomy_autocomplete_validate($element, &$form_stat
     // query is the current content language, so we should use that to update
     // the map of existing terms.
     if (!empty($result[$entity_type])) {
-      $typed_langcode = !$is_new ? $langcode : $GLOBALS['language_content']->language;
+      $typed_langcode = !$is_new ? $langcode : $GLOBALS['language_content']->langcode;
       foreach (taxonomy_term_load_multiple(array_keys($result[$entity_type])) as $term) {
         $name = _entity_translation_taxonomy_label($term, $typed_langcode);
         $existing_terms[$name] = $term;
@@ -530,12 +507,11 @@ function entity_translation_taxonomy_autocomplete_validate($element, &$form_stat
         $term = $existing_terms[$typed_tag];
       }
       else {
-        $term = (object) array(
-          'tid' => 'autocreate',
-          'vid' => $vocabulary->vid,
+        $term = entity_create('taxonomy_term', array(
           'name' => $typed_tag,
-          'vocabulary_machine_name' => $vocabulary->machine_name,
-        );
+          'vocabulary' => $vocabulary->machine_name,
+          'format' => 1,
+        ));
         $handler = entity_translation_get_handler($entity_type, $term);
         $handler->setOriginalLanguage($langcode);
         $handler->initTranslations();

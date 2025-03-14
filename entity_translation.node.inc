@@ -6,11 +6,6 @@
  */
 
 /**
- * Identifies a content type which has translation support enabled.
- */
-define('ENTITY_TRANSLATION_ENABLED', 4);
-
-/**
  * Hides translation metadata.
  */
 define('ENTITY_TRANSLATION_METADATA_HIDE', 0);

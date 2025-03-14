@@ -612,7 +612,6 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * Saves entity translation records to the storage.
    */
   protected function doSaveTranslations($translations, $table, $revision = FALSE) {
-    $backtrace = debug_backtrace(22);
     // Delete and insert, rather than update, in case a value was added.
     $query = db_delete($table)
       ->condition('entity_type', $this->entityType)
@@ -676,7 +675,6 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    * @see EntityTranslationHandlerInterface::setTranslation()
    */
   public function setTranslation($translation, $values = NULL) {
-    dd('setTranslation');
     $args = func_get_args();
     if (isset($translation['source']) && $translation['langcode'] == $translation['source']) {
       throw new Exception('Invalid translation language');
@@ -765,7 +763,6 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
    */
   public function initTranslations() {
     $langcode = $this->getLanguage();
-    $backtrace = debug_backtrace(2);
 
     if (!empty($langcode)) {
       $translation = array('langcode' => $langcode, 'status' => 1);
@@ -918,15 +915,15 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
     if (!empty($settings['default_language'])) {
       switch ($settings['default_language']) {
         case ENTITY_TRANSLATION_LANGUAGE_DEFAULT:
-          $langcode = language_default()->language;
+          $langcode = language_default()->langcode;
           break;
 
         case ENTITY_TRANSLATION_LANGUAGE_CURRENT:
-          $langcode = $GLOBALS[LANGUAGE_TYPE_CONTENT]->language;
+          $langcode = $GLOBALS[LANGUAGE_TYPE_CONTENT]->langcode;
           break;
 
         case ENTITY_TRANSLATION_LANGUAGE_AUTHOR:
-          $langcode = $GLOBALS['user']->language;
+          $langcode = $GLOBALS['user']->langcode;
           break;
 
         default:
@@ -1627,7 +1624,16 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
 
     $translation['status'] = intval($values['status']);
     $translation['uid'] = $values['name'] ? user_load_by_name($values['name'])->uid : 0;
-    $translation['created'] = empty($values['created']) ? REQUEST_TIME : strtotime($values['created']['date'] . ' ' . $values['created']['time']);
+    $created = REQUEST_TIME;
+    if (isset($values['created']) && is_array($values['created'])) {
+      if (is_array($values['created'])) {
+        $created = strtotime($values['created']['date'] . ' ' . $values['created']['time']);
+      }
+      else {
+        $created = strtotime($values['created']);
+      }
+    }
+    $translation['created'] = $created;
     $this->setTranslation($translation);
 
     // If no redirect has been explicitly set, go to the edit form for the
