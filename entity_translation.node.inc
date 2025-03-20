@@ -293,7 +293,7 @@ function entity_translation_node_update_index($node) {
   $translations = entity_translation_get_handler('node', $node)->getTranslations();
   foreach ($langcodes as $langcode) {
     // Skip the default language (already indexed by search.module).
-    if ($GLOBALS[LANGUAGE_TYPE_CONTENT]->language != $langcode && isset($translations->data[$langcode])) {
+    if ($GLOBALS[LANGUAGE_TYPE_CONTENT]->langcode != $langcode && isset($translations->data[$langcode])) {
       // Render the node in each language.
       node_build_content($node, 'search_index', $langcode);
       $rendered = drupal_render($node->content);
