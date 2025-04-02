@@ -28,6 +28,24 @@ function entity_translation_node($entity_type, $node) {
 }
 
 /**
+ * Use the 'label callback' to get the title of a node.
+ *
+ * The title module implements this, it used to be a default
+ * part of the entity API in Drupal 7 but it was removed
+ * in backdrop.
+ */
+function entity_translation_node_get_title($node, $langcode) {
+  $label = $node->label();
+  if (!empty($node->translations) && language_multilingual() && entity_translation_node_supported_type($node->type)) {
+    $info = entity_get_info('node');
+    if (isset($info['label callback']) && isset($info['entity keys']['label'])) {
+      $label = $info['label callback']($node, 'node', $langcode);
+    }
+  }
+  return $label;
+}
+
+/**
  * Node-specific menu alterations.
  */
 function entity_translation_node_menu_alter(&$items, $backup) {
@@ -44,7 +62,7 @@ function entity_translation_node_menu_alter(&$items, $backup) {
     $access_arguments = array(1);
     $page_arguments = array('node', 1);
   }
-
+  $items['node/%node']['page callback'] = 'entity_translation_node_page_view';
   $items['node/%node/translate']['page callback'] = 'entity_translation_overview';
   $items['node/%node/translate']['page arguments'] = $page_arguments;
   $items['node/%node/translate']['access arguments'] = $access_arguments;
@@ -111,6 +129,17 @@ function entity_translation_node_view($node, $build_mode, $langcode) {
       );
     }
   }
+}
+
+/**
+ * Overrides node_page_view to set the title properly
+ */
+function entity_translation_node_page_view(Node $node) {
+  $page = node_page_view($node);
+  global $language;
+  $title = entity_translation_node_get_title($node, $language->langcode);
+  drupal_set_title($title);
+  return $page;
 }
 
 /**

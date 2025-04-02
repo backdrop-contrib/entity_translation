@@ -1632,7 +1632,7 @@ function entity_translation_entity_form_language_update($element, &$form_state, 
  * Submit handler for the entity deletion.
  */
 function entity_translation_entity_form_submit($form, &$form_state) {
-  if ($form_state['build_info']['form_id'] == 'page_node_form' && isset($form_state['node'])) {
+  if ($form_state['build_info']['base_form_id'] == 'node_form' && isset($form_state['node'])) {
     entity_translation_entity_form_submit_node_update_field_langcode($form, $form_state);
   }
   if ($form_state['clicked_button']['#value'] == t('Delete')) {
@@ -2191,4 +2191,16 @@ function path_entity_translation_delete($entity_type, $entity, $langcode) {
 function entity_translation_field_attach_prepare_translation_alter(&$entity, $context) {
   $handler = entity_translation_get_handler('node', $entity);
   $handler->setActiveLanguage($context['langcode']);
+}
+/**
+ * Implements hook_entity_view().
+ */
+function entity_translation_entity_view($entity, $type, $view_mode, $langcode) {
+  if ($type == 'node') {
+    $info = entity_get_info('node');
+    if (isset($info['entity keys']['label'])) {
+      $label_property = $info['entity keys']['label'];
+      $entity->{$label_property} = entity_translation_node_get_title($entity, $langcode);
+    }
+  }
 }
