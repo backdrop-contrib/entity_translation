@@ -1407,6 +1407,24 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
       $this->menuForm($form, $form_state);
     }
 
+    if (isset($form['path']) && $is_translation) {
+      if (isset($form['path']['source']['#value'])) {
+        $path = path_load([
+          'source' => $form['path']['source']['#value'],
+          'langcode' => $form_langcode,
+        ]);
+        if ($path) {
+          $form['path']['alias']['#default_value'] = $path['alias'];
+          $form['path']['pid']['#value'] = $path['pid'];
+          $form['path']['auto']['#default_value'] = $path['auto'];
+        }
+        else {
+          unset($form['path']['alias']['#default_value']);
+        }
+      }
+      $form['path']['langcode']['#value'] = $form_langcode;
+    }
+
     // Process entity form submission.
     $form['#submit'][] = 'entity_translation_entity_form_submit';
 

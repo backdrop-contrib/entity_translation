@@ -87,15 +87,26 @@ function entity_translation_hook_info() {
  * Implements hook_module_implements_alter().
  */
 function entity_translation_module_implements_alter(&$implementations, $hook) {
+  // Move some of our hook implementations to the end of the list.
   switch ($hook) {
     case 'menu_alter':
     case 'entity_info_alter':
-      // Move some of our hook implementations to the end of the list.
       $group = $implementations['entity_translation'];
       unset($implementations['entity_translation']);
       $implementations['entity_translation'] = $group;
       break;
   }
+  // Move implementations to the top of the list
+  if ($hook == 'entity_update') {
+    $group = $implementations['entity_translation'];
+    unset($implementations['entity_translation']);
+    // We unset the core path_entity_update because
+    // it's cleaner to completely override its behavior
+    // for translations
+    unset($implementations['path']);
+    $implementations = ['entity_translation' => $group] + $implementations;
+  }
+
 }
 
 /**
@@ -2136,9 +2147,10 @@ function entity_translation_entity_uuid_presave(&$entity, $entity_type) {
 function entity_translation_pathauto_alias_alter(&$alias, array &$context) {
   $info = entity_get_info();
   $entity_type = $context['module'];
+  $config = config_get('entity_translation');
   $operations_modes = array(
-    'bulkupdate' => variable_get('entity_translation_pathauto_state_mode_bulkupdate', 'generate_all_aliases_all_languages'),
-    'update' => variable_get('entity_translation_pathauto_state_mode_update', 'generate_alias_active_language'),
+    'bulkupdate' => $config->get('path.state_mode_bulkupdate'),
+    'update' => $config->get('path.state_mode_update'),
   );
   $operation = $context['op'];
 
@@ -2173,6 +2185,57 @@ function entity_translation_pathauto_alias_alter(&$alias, array &$context) {
         pathauto_create_alias($entity_type, $operation . '_translation', $context['source'], $context['data'], $context['type'], $language);
       }
     }
+  }
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function entity_translation_entity_update(Entity $entity) {
+  $use_core_path_hook = FALSE;
+  if (isset($entity->path)) {
+    $path = $entity->path;
+    $entity_translation_enabled = entity_translation_enabled($entity->entityType(), $entity);
+    $handler = entity_translation_get_handler($entity->entityType(), $entity);
+    $langcode = isset($entity->langcode) ? $entity->langcode : LANGUAGE_NONE;
+    if (!$entity_translation_enabled || !$handler || $handler->getActiveLanguage() == $langcode) {
+      $use_core_path_hook = TRUE;
+    }
+    else {
+      $handler_langcode = $handler->getActiveLanguage();
+      if (!empty($entity->path['auto'])) {
+        module_load_include('inc', 'path');
+        $uri = $entity->uri();
+        $entity->langcode = $handler_langcode;
+        $path = path_save_automatic_entity_alias($entity);
+
+        // Ideally this would be in hook_taxonomy_term_update() instead, but as
+        // hook_entity_update() fires second, we have to include it directly here.
+        // @see path_entity_update
+        if ($entity->entityType() === 'taxonomy_term') {
+          // Generate new aliases for all children as well.
+          foreach (taxonomy_get_tree($entity->vocabulary, $entity->tid, NULL, TRUE) as $subterm) {
+            path_save_automatic_entity_alias($subterm);
+          }
+        }
+        $entity->langcode = $langcode;
+      }
+      else {
+        $existing_path = path_load([
+          'source' => $entity->path['source'],
+          'langcode' => $handler_langcode,
+        ]);
+        if ($existing_path) {
+          $path['pid'] = $existing_path['pid'];
+        }
+        $path['langcode'] = $handler_langcode;
+        path_save($path);
+      }
+    }
+    $entity->path = $path;
+  }
+  if ($use_core_path_hook) {
+    path_entity_update($entity);
   }
 }
 

@@ -59,11 +59,6 @@ class EntityTranslationNodeHandler extends EntityTranslationDefaultHandler {
         $form['translation']['created']['#access'] = FALSE;
       }
     }
-
-    // Path aliases natively support multilingual values.
-    if (isset($form['path'])) {
-      $form['path']['#multilingual'] = TRUE;
-    }
   }
 
   /**
