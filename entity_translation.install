@@ -261,7 +261,6 @@ function entity_translation_update_1000() {
   $config->set('show_fallback_on_overview_pages', update_variable_get('entity_translation_show_fallback_on_overview_pages', FALSE));
   $config->set('shared_labels', update_variable_get('entity_translation_shared_labels', TRUE));
   $config->set('workflow_enabled', update_variable_get('entity_translation_workflow_enabled', FALSE));
-  $config->save();
 
   update_variable_del('entity_translation_entity_types');
   update_variable_del('translation_language_type');
@@ -281,4 +280,26 @@ function entity_translation_update_1000() {
     db_change_field('entity_translation', 'language', 'langcode', $schema['entity_translation']['langcode']);
     db_change_field('entity_translation_revision', 'language', 'langcode', $schema['entity_translation_revision']['langcode']);
   }
+
+  $enabled_types = array_filter(update_variable_get('entity_translation_entity_types', array()));
+
+  foreach ($enabled_types as $entity_type) {
+    $entity_info = entity_get_info($entity_type);
+    $label = !empty($entity_info['label']) ? $info['label'] : $entity_type;
+    $bundles = array($entity_type => array('label' => $label));
+    if (!empty($entity_info['bundles'])) {
+      $bundles = $entity_info['bundles'];
+    }
+
+    foreach ($bundles as $bundle => $info) {
+      $settings_key = 'entity_translation_settings_' . $entity_type . '__' . $bundle;
+      $settings = update_variable_get($settings_key, array());
+      if (!empty($settings)) {
+        $config->set($entity_type . '__' . $bundle, $settings);
+        update_variable_del($settings_key);
+      }
+    }
+  }
+
+  $config->save();
 }
