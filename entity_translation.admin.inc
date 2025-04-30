@@ -106,72 +106,70 @@ function entity_translation_admin_form($form, $form_state) {
     $languages[$langcode] = t($language->name);
   }
   foreach ($enabled_types as $entity_type) {
-    if ($entity_type != 0) {
-      $label = $options[$entity_type];
+    $label = $options[$entity_type];
 
-      $entity_info = entity_get_info($entity_type);
-      $bundles = !empty($entity_info['bundles']) ? $entity_info['bundles'] : array($entity_type => array('label' => $label));
-      $enabled_bundles = 0;
+    $entity_info = entity_get_info($entity_type);
+    $bundles = !empty($entity_info['bundles']) ? $entity_info['bundles'] : array($entity_type => array('label' => $label));
+    $enabled_bundles = 0;
 
-      foreach ($bundles as $bundle => $info) {
-        if (entity_translation_enabled_bundle($entity_type, $bundle)) {
-          $enabled_bundles++;
-          $settings = entity_translation_settings($entity_type, $bundle);
-          $settings_key = $entity_type . '__' . $bundle;
-          $form['settings'][$entity_type][$settings_key] = array('#tree' => TRUE);
+    foreach ($bundles as $bundle => $info) {
+      if (entity_translation_enabled_bundle($entity_type, $bundle)) {
+        $enabled_bundles++;
+        $settings = entity_translation_settings($entity_type, $bundle);
+        $settings_key = $entity_type . '__' . $bundle;
+        $form['settings'][$entity_type][$settings_key] = array('#tree' => TRUE);
 
-          // If the entity defines no bundle we do not need the fieldset.
-          if (count($bundles) > 1 || $bundle != $entity_type) {
-            $form['settings'][$entity_type][$settings_key] += array(
-              '#type' => 'fieldset',
-              '#title' => $info['label'],
-              '#collapsible' => TRUE,
-              '#collapsed' => TRUE,
-            );
-          }
-
-          $form['settings'][$entity_type][$settings_key]['default_language'] = array(
-            '#type' => 'select',
-            '#title' => t('Default language'),
-            '#options' => $languages,
-            '#default_value' => $settings['default_language'],
-          );
-
-          $form['settings'][$entity_type][$settings_key]['hide_language_selector'] = array(
-            '#type' => 'checkbox',
-            '#title' => t('Hide language selector'),
-            '#default_value' => $settings['hide_language_selector'],
-          );
-
-          $form['settings'][$entity_type][$settings_key]['exclude_language_none'] = array(
-            '#type' => 'checkbox',
-            '#title' => t('Exclude <em>Language neutral</em> from the available languages'),
-            '#default_value' => $settings['exclude_language_none'],
-          );
-
-          $form['settings'][$entity_type][$settings_key]['lock_language'] = array(
-            '#type' => 'checkbox',
-            '#title' => t('Prevent language from being changed once the entity has been created'),
-            '#default_value' => $settings['lock_language'],
-          );
-
-          $form['settings'][$entity_type][$settings_key]['shared_fields_original_only'] = array(
-            '#type' => 'checkbox',
-            '#title' => t('Hide shared elements on translation forms'),
-            '#description' => t('Display form elements shared across translations only on entity forms for the original language.'),
-            '#default_value' => $settings['shared_fields_original_only'],
+        // If the entity defines no bundle we do not need the fieldset.
+        if (count($bundles) > 1 || $bundle != $entity_type) {
+          $form['settings'][$entity_type][$settings_key] += array(
+            '#type' => 'fieldset',
+            '#title' => $info['label'],
+            '#collapsible' => TRUE,
+            '#collapsed' => TRUE,
           );
         }
-      }
 
-      if ($enabled_bundles > 0) {
-        $form['settings'][$entity_type][$settings_key]['#collapsed'] = $enabled_bundles > 1;
-        $form['settings'][$entity_type] += array(
-          '#type' => 'fieldset',
-          '#group' => 'tabs',
-          '#title' => $label,
+        $form['settings'][$entity_type][$settings_key]['default_language'] = array(
+          '#type' => 'select',
+          '#title' => t('Default language'),
+          '#options' => $languages,
+          '#default_value' => $settings['default_language'],
+        );
+
+        $form['settings'][$entity_type][$settings_key]['hide_language_selector'] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Hide language selector'),
+          '#default_value' => $settings['hide_language_selector'],
+        );
+
+        $form['settings'][$entity_type][$settings_key]['exclude_language_none'] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Exclude <em>Language neutral</em> from the available languages'),
+          '#default_value' => $settings['exclude_language_none'],
+        );
+
+        $form['settings'][$entity_type][$settings_key]['lock_language'] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Prevent language from being changed once the entity has been created'),
+          '#default_value' => $settings['lock_language'],
+        );
+
+        $form['settings'][$entity_type][$settings_key]['shared_fields_original_only'] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Hide shared elements on translation forms'),
+          '#description' => t('Display form elements shared across translations only on entity forms for the original language.'),
+          '#default_value' => $settings['shared_fields_original_only'],
         );
       }
+    }
+
+    if ($enabled_bundles > 0) {
+      $form['settings'][$entity_type][$settings_key]['#collapsed'] = $enabled_bundles > 1;
+      $form['settings'][$entity_type] += array(
+        '#type' => 'fieldset',
+        '#group' => 'tabs',
+        '#title' => $label,
+      );
     }
   }
 
