@@ -277,8 +277,8 @@ function entity_translation_update_1000() {
   if ($query->rowCount()) {
     // update tables to use langcode instead of language
     $schema = entity_translation_schema();
-    db_change_field('entity_translation', 'language', 'langcode', $schema['entity_translation']['langcode']);
-    db_change_field('entity_translation_revision', 'language', 'langcode', $schema['entity_translation_revision']['langcode']);
+    db_change_field('entity_translation', 'language', 'langcode', $schema['entity_translation']['fields']['langcode']);
+    db_change_field('entity_translation_revision', 'language', 'langcode', $schema['entity_translation_revision']['fields']['langcode']);
   }
 
   $enabled_types = array_filter(update_variable_get('entity_translation_entity_types', array()));
