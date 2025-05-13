@@ -112,6 +112,10 @@ function entity_translation_admin_form($form, $form_state) {
     $bundles = !empty($entity_info['bundles']) ? $entity_info['bundles'] : array($entity_type => array('label' => $label));
     $enabled_bundles = 0;
 
+    uasort($bundles, function ($a, $b) {
+      return $a['label'] <=> $b['label'];
+    });
+
     foreach ($bundles as $bundle => $info) {
       if (entity_translation_enabled_bundle($entity_type, $bundle)) {
         $enabled_bundles++;
