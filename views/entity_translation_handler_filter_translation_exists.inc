@@ -118,7 +118,7 @@ class entity_translation_handler_filter_translation_exists extends views_handler
       }
       $query = db_select('entity_translation', 'es')
         ->condition('entity_type', $entity_type)
-        ->condition('language', $this->value);
+        ->condition('langcode', $this->value);
       $query->addField('es', 'entity_id');
       $this->query->add_where($this->options['group'], "$this->table_alias.entity_id", $query, $this->operator);
     }
@@ -126,7 +126,7 @@ class entity_translation_handler_filter_translation_exists extends views_handler
     else {
       $value = array_keys($this->value);
       $this->query->add_where($this->options['group'], "$this->table_alias.source", '', '<>');
-      $this->query->add_where($this->options['group'], "$this->table_alias.language", array_values($this->value), $this->operator);
+      $this->query->add_where($this->options['group'], "$this->table_alias.langcode", array_values($this->value), $this->operator);
     }
   }
 }
