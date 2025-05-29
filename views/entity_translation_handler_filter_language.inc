@@ -22,6 +22,6 @@ class entity_translation_handler_filter_language extends views_handler_filter_lo
       $operator = "<>";
     }
 
-    $this->query->add_where($this->options['group'], "$this->table_alias.$this->real_field", '', $operator);
+    $this->query->add_where($this->options['group'], "{$this->table_alias}.langcode", '', $operator);
   }
 }
