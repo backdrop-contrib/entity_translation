@@ -222,6 +222,10 @@ function entity_translation_i18n_menu_form_menu_edit_item_validate($form, &$form
  *   support for other entities, e.g. taxonomy_term (?).
  */
 function entity_translation_i18n_menu_item($item) {
+  if (!isset($item['link_path'])) {
+    return FALSE;
+  }
+
   $cache = &backdrop_static(__FUNCTION__, array());
 
   if (!isset($cache[$item['link_path']])) {
