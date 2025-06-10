@@ -128,7 +128,7 @@ function entity_translation_entity_info() {
         'class' => 'EntityTranslationNodeHandler',
         'access callback' => 'entity_translation_node_tab_access',
         'access arguments' => array(1),
-        'admin theme' => variable_get('node_admin_theme'),
+        'admin theme' => config_get('system.core', 'node_admin_theme'),
         'bundle callback' => 'entity_translation_node_supported_type',
         'default settings' => array(
           'default_language' => LANGUAGE_NONE,
