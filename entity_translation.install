@@ -247,6 +247,7 @@ function entity_translation_update_last_removed() {
   return 7009;
 }
 
+
 /**
  * Backdrop migration
  */
@@ -308,11 +309,20 @@ function entity_translation_update_1000() {
       $settings = update_variable_get($settings_key, array());
       if (!empty($settings)) {
         $config->set($entity_type . '__' . $bundle, $settings);
-        update_variable_del($settings_key);
+        if ($entity_type == 'taxonomy_term') {
+          $et_taxonomy_settings = update_variable_get('entity_translation_taxonomy', array());
+          if (isset($et_taxonomy_settings[$bundle]) && $et_taxonomy_settings[$bundle]) {
+            $vocabulary = taxonomy_vocabulary_load($bundle);
+            $vocabulary->language = ENTITY_TRANSLATION_ENABLED;
+            $vocabulary->save();
+          }
+        }
       }
+      update_variable_del($settings_key);
     }
   }
 
+  update_variable_del('entity_translation_taxonomy');
   update_variable_del('entity_translation_entity_types');
   update_variable_del('translation_language_type');
 
