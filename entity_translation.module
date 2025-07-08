@@ -68,6 +68,17 @@ function entity_translation_autoload_info() {
 }
 
 /**
+ * Implements hook_config_info().
+ */
+function entity_translation_config_info() {
+  $prefixes['entity_translation.settings'] = [
+    'label' => t('Entity Translation Settings'),
+    'group' => t('Configuration'),
+  ];
+  return $prefixes;
+}
+
+/**
  * Implements hook_hook_info().
  */
 function entity_translation_hook_info() {
