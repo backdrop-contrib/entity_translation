@@ -1290,8 +1290,8 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
         ),
       );
       foreach (language_list() as $language) {
-        if (isset($translations->data[$language->language])) {
-          $form['source_language']['language']['#options'][$language->language] = t($language->name);
+        if (isset($translations->data[$language->langcode])) {
+          $form['source_language']['language']['#options'][$language->langcode] = t($language->name);
         }
       }
     }
