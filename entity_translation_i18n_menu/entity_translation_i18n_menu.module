@@ -382,7 +382,7 @@ function entity_translation_i18n_menu_entity_translation_delete($entity_type, $e
 
   // Clean-up all menu module links that point to this node.
   $result = db_select('menu_links', 'ml')
-    ->fields('ml', array('mlid', 'language'))
+    ->fields('ml', array('mlid', 'langcode'))
     ->condition('link_path', 'node/' . $entity_id)
     ->condition('module', 'menu')
     ->execute()
@@ -403,7 +403,7 @@ function entity_translation_i18n_menu_entity_translation_delete($entity_type, $e
         if(!empty($source->lid)) {
           db_delete('locales_target')
             ->condition('lid', $source->lid)
-            ->condition('language', $langcode)
+            ->condition('langcode', $langcode)
             ->execute();
         }
       }
