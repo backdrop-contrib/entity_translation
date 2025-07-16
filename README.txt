@@ -11,8 +11,12 @@ To submit bug reports and feature suggestions, or to track changes:
 
 -- REQUIREMENTS --
 
-None.
-
+WARNING: This module is beta and uses a hack to BACKDROP CORE if you want to
+translate fields provided by the paragraphs module. Do not use with
+paragraphs. Pending the commit of 
+https://github.com/backdrop/backdrop-issues/issues/185
+for a full release to replace the functionality lost when Backdrop core
+removed the `entity_language` function.
 
 -- INSTALLATION --
 
