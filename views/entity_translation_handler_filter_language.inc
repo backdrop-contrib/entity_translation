@@ -10,6 +10,11 @@
  */
 class entity_translation_handler_filter_language extends views_handler_filter_locale_language {
 
+  function construct() {
+    parent::construct();
+    $this->real_field = 'langcode';
+  }
+
   /**
    * Override the default behaviour, insert an empty string instead of NULL.
    */
@@ -22,6 +27,6 @@ class entity_translation_handler_filter_language extends views_handler_filter_lo
       $operator = "<>";
     }
 
-    $this->query->add_where($this->options['group'], "{$this->table_alias}.langcode", '', $operator);
+    $this->query->add_where($this->options['group'], "{$this->table_alias}.{$this->real_field}", '', $operator);
   }
 }
