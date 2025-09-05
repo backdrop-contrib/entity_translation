@@ -298,7 +298,7 @@ function entity_translation_update_1000() {
 
   foreach ($updated_types as $entity_type) {
     $entity_info = entity_get_info($entity_type);
-    $label = !empty($entity_info['label']) ? $info['label'] : $entity_type;
+    $label = !empty($entity_info['label']) ? $entity_info['label'] : $entity_type;
     $bundles = array($entity_type => array('label' => $label));
     if (!empty($entity_info['bundles'])) {
       $bundles = $entity_info['bundles'];
