@@ -9,9 +9,4 @@
   "show_fallback_on_overview_pages": false,
   "shared_labels": true,
   "workflow_enabled": false,
-  "path": {
-    "state_active_new_translation": true,
-    "state_mode_update": "generate_alias_active_language",
-    "state_mode_bulkupdate": "generate_all_aliases_all_languages"
-  }
 }

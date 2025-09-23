@@ -177,48 +177,6 @@ function entity_translation_admin_form($form, $form_state) {
     }
   }
 
-  if (module_exists('path')) {
-    $form['path'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Path'),
-      '#collapsible' => FALSE,
-      '#tree' => TRUE,
-    );
-
-
-    $form['path']['state_active_new_translation'] = array(
-      '#title' => t('Pathauto state automatically activated on forms for new translations'),
-      '#type' => 'checkbox',
-      '#description' => t('When this option is enabled, the Pathauto state checkbox is automatically selected on the add-translation form. <br/><b>Attention:</b>When combining this option with the next one it may lead to cases where all aliases for all languages are auto-updated whenever a new translation is added.'),
-      '#default_value' => $config->get('path.state_active_new_translation'),
-    );
-
-    // These are the possible options when pathauto state is active.
-    $mode_options = array(
-      'generate_alias_active_language' => t('Generate alias only for current language'),
-      'generate_missing_aliases_all_languages' => t('Generate missing aliases for all languages'),
-      'generate_all_aliases_all_languages' => t('Generate all aliases for all languages'),
-    );
-
-    // Single entity update mode.
-    $form['path']['state_mode_update'] = array(
-      '#title' => t('Pathauto state mode for single update'),
-      '#type' => 'select',
-      '#description' => t('When the Pathauto state is activated, the mode defined here will be used for alias generation, on a single update, e.g. when editing a node using the node edit form.'),
-      '#options' => $mode_options,
-      '#default_value' => $config->get('path.state_mode_update'),
-    );
-
-    // Bulk entity updates mode.
-    $form['path']['state_mode_bulkupdate'] = array(
-      '#title' => t('Pathauto state mode for bulk updates'),
-      '#type' => 'select',
-      '#description' => t('When the Pathauto state is activated, the mode defined here will be used for alias generation, on bulk updates.'),
-      '#options' => $mode_options,
-      '#default_value' => $config->get('path.state_mode_bulkupdate'),
-    );
-  }
-
   $form = system_settings_form($form);
 
   // Menu rebuilding needs to be performed after the system settings are saved.
