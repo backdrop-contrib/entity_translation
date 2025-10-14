@@ -135,10 +135,11 @@ function entity_translation_node_view($node, $build_mode, $langcode) {
  * Overrides node_page_view to set the title properly
  */
 function entity_translation_node_page_view(Node $node) {
-  $page = node_page_view($node);
   global $language;
+  $node->langcode = $language->langcode;
+  $page = node_page_view($node);
   $title = entity_translation_node_get_title($node, $language->langcode);
-  drupal_set_title($title);
+  backdrop_set_title($title);
   return $page;
 }
 
